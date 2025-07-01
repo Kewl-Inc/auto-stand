@@ -1,16 +1,49 @@
-# Auto-Stand
+# 🔧 AutoStand – Kill Your Standup
 
-A Flutter prototype for Auto-Stand.
+Replace daily standups with an AI-generated personal + team digest from your actual work activity.
 
-## Getting Started
+## 🎯 Goal
 
-This project is a starting point for a Flutter application.
+AutoStand automatically generates daily standup updates by analyzing your work across multiple platforms (Notion, Slack, GitHub, Google Docs, Figma, email, calendar) and creates human-sounding summaries for you and your team.
 
-A few resources to get you started if this is your first Flutter project:
+## 🔁 Core Flow
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+1. **Template Setup** (one-time):
+   - Pick your team's daily update sections:
+     - "What I did"
+     - "What I'm blocked by"
+     - "What I learned"
+     - "Show & Tell" (screenshots, Figma, Looms)
+     - "Prototype links"
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+2. **Auto Ingestion** (daily):
+   - AI pulls from Notion, Slack, GitHub, Google Docs, Figma, email, calendar
+   - Parses what you wrote, made, sent, shipped, designed
+
+3. **Digest Output** (at a set time):
+   - Clean, human-sounding summary from each person
+   - Rolled into a team update
+   - Delivered via Slack, email, or hosted URL
+
+## 💥 Magic Moment
+
+You see your own day reflected back to you better than you could've phrased it yourself. Then your teammate posts "whoa this is great, didn't even know you were working on that."
+
+## 🚀 Getting Started
+
+1. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+
+2. Run the app:
+   ```bash
+   flutter run
+   ```
+
+## 🧪 MVP Test Scope
+
+- Just one team (3–6 people)
+- Manual-ish data pulls for now (drop links, it parses)
+- One-week async standup trial
+- Compare with prior standup efficiency and team awareness
