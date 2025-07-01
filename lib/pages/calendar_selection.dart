@@ -1,4 +1,4 @@
-import 'package:base_project/pages/pages.dart';
+import 'package:auto_stand/pages/pages.dart';
 import 'package:flutter/material.dart';
 
 class CalendarSelectionPage extends StatelessWidget {

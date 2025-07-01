@@ -32,7 +32,7 @@ class HomePage extends ConsumerWidget {
                     Text(
                       'Kill your standup with AI-generated team digests',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ).animate().fadeIn(delay: 100.ms, duration: 300.ms).slideX(begin: -0.2),
                   ],
@@ -50,7 +50,7 @@ class HomePage extends ConsumerWidget {
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -68,7 +68,7 @@ class HomePage extends ConsumerWidget {
                       Text(
                         'Create your first team to get started',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 32),

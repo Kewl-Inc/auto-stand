@@ -7,3 +7,4 @@ export 'team_dashboard.dart';
 export 'template_setup_page.dart';
 export 'digest_view_page.dart';
 export 'create_update_page.dart';
+export 'simple_home_page.dart';

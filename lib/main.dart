@@ -15,7 +15,7 @@ void main() async {
     try {
       await dotenv.load(fileName: '.env');
     } catch (e) {
-      print('Warning: .env file not found. Using fallback configuration.');
+      debugPrint('Warning: .env file not found. Using fallback configuration.');
     }
   }
   
@@ -57,34 +57,7 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const HomePage(),
-    ),
-    GoRoute(
-      path: '/setup',
-      builder: (context, state) => const SetupPage(),
-    ),
-    GoRoute(
-      path: '/team/:teamId',
-      builder: (context, state) => TeamDashboard(
-        teamId: state.pathParameters['teamId']!,
-      ),
-    ),
-    GoRoute(
-      path: '/team/:teamId/template',
-      builder: (context, state) => TemplateSetupPage(
-        teamId: state.pathParameters['teamId']!,
-      ),
-    ),
-    GoRoute(
-      path: '/team/:teamId/digest/:date',
-      builder: (context, state) => DigestViewPage(
-        teamId: state.pathParameters['teamId']!,
-        date: DateTime.parse(state.pathParameters['date']!),
-      ),
-    ),
-    GoRoute(
-      path: '/update/create',
-      builder: (context, state) => const CreateUpdatePage(),
+      builder: (context, state) => const SimpleHomePage(),
     ),
   ],
 );

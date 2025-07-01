@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:base_project/models/models.dart';
+import 'package:auto_stand/models/models.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as calendar_api;
 import 'package:http/http.dart' as http;

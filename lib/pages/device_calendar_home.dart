@@ -1,7 +1,7 @@
-import 'package:base_project/services/device_calendar.dart';
-import 'package:base_project/widgets/widgets.dart';
+import 'package:auto_stand/services/device_calendar.dart';
+import 'package:auto_stand/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:base_project/models/models.dart';
+import 'package:auto_stand/models/models.dart';
 import 'package:logger/logger.dart';
 
 class DeviceCalendarHomePage extends StatefulWidget {

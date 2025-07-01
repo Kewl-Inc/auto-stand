@@ -1,7 +1,7 @@
-import 'package:base_project/services/google_calendar.dart';
-import 'package:base_project/widgets/widgets.dart';
+import 'package:auto_stand/services/google_calendar.dart';
+import 'package:auto_stand/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:base_project/models/models.dart';
+import 'package:auto_stand/models/models.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:logger/logger.dart';
 

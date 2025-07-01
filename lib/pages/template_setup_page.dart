@@ -91,7 +91,7 @@ class _TemplateSetupPageState extends ConsumerState<TemplateSetupPage> {
                 Text(
                   'Choose and order the sections for your daily updates',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -123,7 +123,7 @@ class _TemplateSetupPageState extends ConsumerState<TemplateSetupPage> {
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -168,7 +168,7 @@ class _SectionTile extends StatelessWidget {
           section.icon,
           color: section.isEnabled
               ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         title: Text(
           section.title,
@@ -176,7 +176,7 @@ class _SectionTile extends StatelessWidget {
             fontWeight: FontWeight.w500,
             color: section.isEnabled
                 ? Theme.of(context).colorScheme.onSurface
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
         subtitle: Text(
@@ -184,8 +184,8 @@ class _SectionTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             color: section.isEnabled
-                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
+                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         ),
         trailing: Row(
@@ -198,7 +198,7 @@ class _SectionTile extends StatelessWidget {
             const SizedBox(width: 8),
             Icon(
               Icons.drag_handle,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             ),
           ],
         ),

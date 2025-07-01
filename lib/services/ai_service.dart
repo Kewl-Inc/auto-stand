@@ -76,19 +76,24 @@ class AIService {
 
   /// Fetch content from a specific data source
   static Future<String> _fetchContentFromSource(DataSource source) async {
-    // For MVP, just return a placeholder
-    // In production, this would integrate with various APIs
-    switch (source.platform.toLowerCase()) {
-      case 'github':
-        return 'GitHub activity: Created 3 PRs, reviewed 2 PRs, 15 commits';
-      case 'slack':
-        return 'Slack: Discussed API design with team, helped debug auth issue';
-      case 'notion':
-        return 'Notion: Updated project roadmap, wrote API documentation';
-      case 'figma':
-        return 'Figma: Created new onboarding flow designs';
-      default:
-        return '';
+    // Return the content if it's already provided (for manual notes)
+    if (source.content != null && source.content!.isNotEmpty) {
+      return source.content!;
+    }
+    
+    // For MVP, parse the URL/content to understand what was done
+    final url = source.url.toLowerCase();
+    
+    if (url.contains('github.com') && url.contains('/pull/')) {
+      return 'Worked on pull request: ${source.url}';
+    } else if (url.contains('figma.com')) {
+      return 'Updated designs in Figma: ${source.url}';
+    } else if (url.contains('notion.so')) {
+      return 'Updated documentation in Notion: ${source.url}';
+    } else if (source.platform == 'notes') {
+      return source.content ?? '';
+    } else {
+      return 'Worked on: ${source.url}';
     }
   }
 
@@ -99,7 +104,7 @@ class AIService {
   }) async {
     if (_apiKey.isEmpty || _apiKey == 'your-openai-api-key-here') {
       // Return mock data for development
-      return _generateMockSections(templateSections);
+      return _generateMockSections(templateSections, rawContent: rawContent);
     }
 
     try {
@@ -138,11 +143,11 @@ class AIService {
         return _parseAIResponse(content, enabledSections);
       } else {
         _logger.e('OpenAI API error: ${response.statusCode} - ${response.body}');
-        return _generateMockSections(templateSections);
+        return _generateMockSections(templateSections, rawContent: rawContent);
       }
     } catch (e) {
       _logger.e('Error calling OpenAI API', error: e);
-      return _generateMockSections(templateSections);
+      return _generateMockSections(templateSections, rawContent: rawContent);
     }
   }
 
@@ -189,7 +194,7 @@ Each section should have concise, natural-sounding content.
       return sections;
     } catch (e) {
       _logger.e('Error parsing AI response', error: e);
-      return _generateMockSections(templateSections);
+      return _generateMockSections(templateSections, rawContent: response);
     }
   }
 
@@ -205,43 +210,104 @@ Each section should have concise, natural-sounding content.
   /// Generate mock sections for development
   static Map<String, UpdateSection> _generateMockSections(
     List<TemplateSection> templateSections,
+    {String? rawContent}
   ) {
     final sections = <String, UpdateSection>{};
     
+    // Parse the raw content to extract meaningful information
+    final lines = rawContent?.split('\n') ?? [];
+    final githubPRs = <String>[];
+    final figmaLinks = <String>[];
+    final otherWork = <String>[];
+    final notes = <String>[];
+    
+    for (final line in lines) {
+      if (line.contains('github.com') && line.contains('/pull/')) {
+        githubPRs.add(line);
+      } else if (line.contains('figma.com')) {
+        figmaLinks.add(line);
+      } else if (line.contains('Content from notes')) {
+        // Extract notes content
+        final noteIndex = lines.indexOf(line);
+        if (noteIndex < lines.length - 1) {
+          notes.add(lines[noteIndex + 1]);
+        }
+      } else if (line.trim().isNotEmpty && !line.contains('===')) {
+        otherWork.add(line);
+      }
+    }
+    
     for (final template in templateSections.where((s) => s.isEnabled)) {
-      String content;
+      String content = '';
       List<String> bullets = [];
       
       switch (template.type) {
         case SectionType.whatIDid:
-          content = 'Completed the AutoStand MVP implementation';
-          bullets = [
-            'Set up Flutter project structure',
-            'Created data models for teams and updates',
-            'Implemented AI service for content parsing',
-            'Built template configuration UI',
-          ];
+          if (githubPRs.isNotEmpty || figmaLinks.isNotEmpty || otherWork.isNotEmpty) {
+            bullets = [];
+            if (githubPRs.isNotEmpty) {
+              bullets.add('Worked on ${githubPRs.length} pull request${githubPRs.length > 1 ? 's' : ''}');
+            }
+            if (figmaLinks.isNotEmpty) {
+              bullets.add('Updated designs in Figma');
+            }
+            for (final work in otherWork.take(3)) {
+              if (!work.contains('http')) {
+                bullets.add(work.trim());
+              }
+            }
+          } else {
+            content = 'Made progress on various tasks';
+          }
           break;
+          
         case SectionType.blockers:
-          content = 'Waiting on API keys for production testing';
-          bullets = [
-            'Need OpenAI API key for AI summaries',
-            'Figma API access pending approval',
-          ];
+          // Look for blocker keywords in notes
+          final blockerKeywords = ['blocked', 'waiting', 'need', 'stuck'];
+          final blockers = notes.where((note) => 
+            blockerKeywords.any((keyword) => note.toLowerCase().contains(keyword))
+          ).toList();
+          
+          if (blockers.isNotEmpty) {
+            bullets = blockers;
+          } else {
+            content = 'No blockers at this time';
+          }
           break;
+          
         case SectionType.whatILearned:
-          content = 'Flutter\'s provider pattern is great for state management';
-          bullets = [
-            'Riverpod makes dependency injection clean',
-            'AI prompts need careful tuning for good summaries',
-          ];
+          // Look for learning keywords
+          final learningKeywords = ['learned', 'discovered', 'realized', 'found out'];
+          final learnings = notes.where((note) => 
+            learningKeywords.any((keyword) => note.toLowerCase().contains(keyword))
+          ).toList();
+          
+          if (learnings.isNotEmpty) {
+            bullets = learnings;
+          } else {
+            content = 'Continuing to learn and improve';
+          }
           break;
+          
         case SectionType.showAndTell:
-          content = 'Check out the new template setup flow!';
+          if (figmaLinks.isNotEmpty || githubPRs.isNotEmpty) {
+            content = 'Check out the latest updates!';
+            if (figmaLinks.isNotEmpty) {
+              bullets.add('New designs: ${figmaLinks.first}');
+            }
+            if (githubPRs.isNotEmpty) {
+              bullets.add('Code changes: ${githubPRs.first}');
+            }
+          }
           break;
+          
         case SectionType.prototypeLinks:
-          content = 'AutoStand prototype: https://autostand.app/demo';
+          final links = lines.where((line) => line.contains('http')).take(3).toList();
+          if (links.isNotEmpty) {
+            bullets = links;
+          }
           break;
+          
         default:
           content = 'No updates for this section';
       }

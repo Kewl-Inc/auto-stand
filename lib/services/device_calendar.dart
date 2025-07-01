@@ -1,4 +1,4 @@
-import 'package:base_project/models/models.dart';
+import 'package:auto_stand/models/models.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:logger/logger.dart';
 
