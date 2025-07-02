@@ -31,15 +31,72 @@ You see your own day reflected back to you better than you could've phrased it y
 
 ## 🚀 Getting Started
 
-1. Install dependencies:
+### Prerequisites
+
+- Flutter SDK
+- Node.js (for web Slack integration)
+- OpenAI API key
+- Slack webhook URL (optional)
+
+### Configuration
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Kewl-Inc/auto-stand.git
+   cd auto-stand
+   ```
+
+2. **Set up API keys:**
+   
+   Option A: Environment file (recommended)
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your keys
+   ```
+   
+   Option B: Direct configuration
+   ```dart
+   // Edit lib/config/api_config.dart
+   static const String openAIApiKey = 'your-key-here';
+   static const String slackWebhookUrl = 'your-webhook-here';
+   ```
+
+3. **Install dependencies:**
    ```bash
    flutter pub get
    ```
 
-2. Run the app:
-   ```bash
-   flutter run
-   ```
+### Running the App
+
+**For Desktop/Mobile:**
+```bash
+flutter run
+```
+
+**For Web (with Slack integration):**
+```bash
+# Terminal 1: Start proxy server
+cd proxy-server
+npm install
+npm start
+
+# Terminal 2: Run Flutter web
+flutter run -d chrome
+```
+
+Or use the convenience script:
+```bash
+./start-dev.sh
+```
+
+## 📋 Features
+
+- 🤖 AI-powered standup generation using GPT-4
+- 📝 Simple input interface for work items
+- 📋 Copy to clipboard functionality
+- 💬 Direct Slack integration
+- 🎨 Clean, modern Flutter UI
+- 🌐 Cross-platform (Web, iOS, Android, macOS)
 
 ## 🧪 MVP Test Scope
 
@@ -47,3 +104,17 @@ You see your own day reflected back to you better than you could've phrased it y
 - Manual-ish data pulls for now (drop links, it parses)
 - One-week async standup trial
 - Compare with prior standup efficiency and team awareness
+
+## 🔑 Getting API Keys
+
+### OpenAI API Key
+1. Visit https://platform.openai.com/api-keys
+2. Create a new API key
+3. Add to your configuration
+
+### Slack Webhook
+1. Go to https://api.slack.com/apps
+2. Create new app or select existing
+3. Enable "Incoming Webhooks"
+4. Add webhook to workspace
+5. Copy the webhook URL

@@ -16,7 +16,6 @@ class SimpleHomePage extends ConsumerStatefulWidget {
 class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
   final _formKey = GlobalKey<FormState>();
   final _dataSourcesController = TextEditingController();
-  final _notesController = TextEditingController();
   
   bool _isGenerating = false;
   String? _generatedUpdate;
@@ -25,7 +24,6 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
   @override
   void dispose() {
     _dataSourcesController.dispose();
-    _notesController.dispose();
     super.dispose();
   }
 
@@ -38,6 +36,7 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
     });
 
     try {
+      debugPrint('=== Starting standup generation ===');
       // Parse input into data sources
       final sources = _dataSourcesController.text
           .split('\n')
@@ -52,14 +51,10 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
             );
           }).toList();
 
-      // Add notes as a data source if provided
-      if (_notesController.text.trim().isNotEmpty) {
-        sources.add(DataSource(
-          platform: 'notes',
-          url: 'manual-notes',
-          fetchedAt: DateTime.now(),
-          content: _notesController.text.trim(),
-        ));
+
+      debugPrint('Total sources: ${sources.length}');
+      for (var source in sources) {
+        debugPrint('Source - Platform: ${source.platform}, URL: ${source.url}');
       }
 
       // Generate the standup update
@@ -76,12 +71,35 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
         setState(() {
           _generatedUpdate = formatted;
         });
+      } else {
+        debugPrint('Update was null - AI service returned no data');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to generate standup update - AI service error'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Error in _generateStandup: $e');
+      debugPrint('Stack trace: $stackTrace');
+      
+      String errorMessage = 'Error: ${e.toString()}';
+      if (e.toString().contains('API key')) {
+        errorMessage = 'OpenAI API key not configured';
+      } else if (e.toString().contains('401')) {
+        errorMessage = 'Invalid OpenAI API key';
+      } else if (e.toString().contains('429')) {
+        errorMessage = 'OpenAI rate limit exceeded';
+      } else if (e.toString().contains('Failed to parse')) {
+        errorMessage = 'Failed to parse AI response';
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error generating standup: $e'),
+          content: Text(errorMessage),
           backgroundColor: Theme.of(context).colorScheme.error,
+          duration: const Duration(seconds: 5),
         ),
       );
     } finally {
@@ -153,6 +171,55 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
         const SnackBar(
           content: Text('Copied to clipboard! Ready to paste in Slack.'),
           duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _sendToSlack() async {
+    if (_generatedUpdate == null) return;
+    
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    
+    try {
+      final success = await SlackService.sendToSlack(_generatedUpdate!);
+      
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully sent to Slack! 🎉'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to send to Slack. Please copy and paste manually.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -238,32 +305,6 @@ Reviewed 3 PRs''',
                         },
                       ),
                       
-                      const SizedBox(height: 24),
-                      
-                      // Additional Notes
-                      Text(
-                        'Additional notes (optional)',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _notesController,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          hintText: 'Any blockers, learnings, or context to add?',
-                          filled: true,
-                          fillColor: theme.colorScheme.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                        ),
-                      ),
-                      
                       const SizedBox(height: 32),
                       
                       // Generate Button
@@ -325,10 +366,23 @@ Reviewed 3 PRs''',
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            IconButton(
-                              onPressed: _copyToClipboard,
-                              icon: const Icon(Icons.copy),
-                              tooltip: 'Copy to clipboard',
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: _copyToClipboard,
+                                  icon: const Icon(Icons.copy),
+                                  tooltip: 'Copy to clipboard',
+                                ),
+                                const SizedBox(width: 8),
+                                FilledButton.icon(
+                                  onPressed: _sendToSlack,
+                                  icon: const Icon(Icons.send),
+                                  label: const Text('Send to Slack'),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

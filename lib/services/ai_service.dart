@@ -1,16 +1,21 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:auto_stand/config/api_config.dart';
 import 'package:auto_stand/models/models.dart';
-import 'package:logger/logger.dart';
 
 class AIService {
-  static final _logger = Logger();
   static const String _openAIBaseUrl = 'https://api.openai.com/v1';
   
-  static String get _apiKey => 
-      dotenv.env['OPENAI_API_KEY'] ?? ApiConfig.openAIApiKey;
+  static String get _apiKey {
+    try {
+      return dotenv.env['OPENAI_API_KEY'] ?? ApiConfig.openAIApiKey;
+    } catch (e) {
+      // Fallback for web or when dotenv is not initialized
+      return ApiConfig.openAIApiKey;
+    }
+  }
 
   /// Parse content from various sources and generate standup update
   static Future<StandupUpdate?> generateStandupUpdate({
@@ -20,11 +25,16 @@ class AIService {
     required DateTime date,
   }) async {
     try {
+      debugPrint('Starting standup generation...');
+      debugPrint('Data sources count: ${dataSources.length}');
+      
       // Fetch content from data sources
       final rawContent = await _fetchAndCombineContent(dataSources);
       
+      debugPrint('Raw content length: ${rawContent.length}');
+      
       if (rawContent.isEmpty) {
-        _logger.w('No content found from data sources');
+        debugPrint('No content found from data sources');
         return null;
       }
 
@@ -33,6 +43,8 @@ class AIService {
         rawContent: rawContent,
         templateSections: templateSections,
       );
+      
+      debugPrint('Generated sections: ${sections.length}');
 
       // Create standup update
       return StandupUpdate(
@@ -44,8 +56,9 @@ class AIService {
         createdAt: DateTime.now(),
         rawContent: rawContent,
       );
-    } catch (e) {
-      _logger.e('Error generating standup update', error: e);
+    } catch (e, stackTrace) {
+      debugPrint('Error generating standup update: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
   }
@@ -67,7 +80,7 @@ class AIService {
           contentParts.add('=== Content from ${source.platform} ===\n$content\n');
         }
       } catch (e) {
-        _logger.e('Error fetching from ${source.platform}', error: e);
+        debugPrint('Error fetching from ${source.platform}: $e');
       }
     }
     
@@ -103,8 +116,7 @@ class AIService {
     required List<TemplateSection> templateSections,
   }) async {
     if (_apiKey.isEmpty || _apiKey == 'your-openai-api-key-here') {
-      // Return mock data for development
-      return _generateMockSections(templateSections, rawContent: rawContent);
+      throw Exception('OpenAI API key not configured. Please add a valid API key.');
     }
 
     try {
@@ -142,33 +154,36 @@ class AIService {
         final content = data['choices'][0]['message']['content'];
         return _parseAIResponse(content, enabledSections);
       } else {
-        _logger.e('OpenAI API error: ${response.statusCode} - ${response.body}');
-        return _generateMockSections(templateSections, rawContent: rawContent);
+        final error = jsonDecode(response.body);
+        throw Exception('OpenAI API error: ${error['error']['message'] ?? response.body}');
       }
     } catch (e) {
-      _logger.e('Error calling OpenAI API', error: e);
-      return _generateMockSections(templateSections, rawContent: rawContent);
+      debugPrint('Error calling OpenAI API: $e');
+      rethrow; // Re-throw the error instead of returning mock data
     }
   }
 
   /// Build prompt for AI
   static String _buildPrompt(String rawContent, List<TemplateSection> sections) {
-    final sectionsPrompt = sections.map((section) => '''
-    
-### ${section.title}
-${section.customPrompt ?? section.description}
-    ''').join('\n');
+    final sectionsMap = sections.map((section) => '''
+"${section.id}": "${section.title} - ${section.customPrompt ?? section.description}"''').join(',\n');
 
     return '''
-Based on the following activity data, create a daily standup update with these sections:
-
-$sectionsPrompt
+Based on the following activity data, create a daily standup update.
 
 Here's the activity data:
 $rawContent
 
-Please format the response as JSON with section IDs as keys and content as values.
-Each section should have concise, natural-sounding content.
+Generate a JSON response with these exact keys:
+{
+$sectionsMap
+}
+
+For each section, provide concise, natural-sounding content in first person.
+Use bullet points where appropriate (start lines with • or -).
+Focus on being helpful and informative for a daily standup meeting.
+
+Return ONLY the JSON object, no markdown formatting or code blocks.
 ''';
   }
 
@@ -178,7 +193,16 @@ Each section should have concise, natural-sounding content.
     List<TemplateSection> templateSections,
   ) {
     try {
-      final json = jsonDecode(response);
+      // Remove markdown code blocks if present
+      String cleanedResponse = response;
+      if (response.contains('```json')) {
+        cleanedResponse = response
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
+      }
+      
+      final json = jsonDecode(cleanedResponse);
       final sections = <String, UpdateSection>{};
       
       for (final section in templateSections) {
@@ -193,8 +217,9 @@ Each section should have concise, natural-sounding content.
       
       return sections;
     } catch (e) {
-      _logger.e('Error parsing AI response', error: e);
-      return _generateMockSections(templateSections, rawContent: response);
+      debugPrint('Error parsing AI response: $e');
+      debugPrint('Raw response: $response');
+      throw Exception('Failed to parse AI response: $e');
     }
   }
 
@@ -207,6 +232,7 @@ Each section should have concise, natural-sounding content.
         .toList();
   }
 
+  /* REMOVED - No mock data allowed
   /// Generate mock sections for development
   static Map<String, UpdateSection> _generateMockSections(
     List<TemplateSection> templateSections,
@@ -321,6 +347,7 @@ Each section should have concise, natural-sounding content.
     
     return sections;
   }
+  */
 
   /// Summarize team updates into a digest
   static Future<String> generateTeamDigest({
