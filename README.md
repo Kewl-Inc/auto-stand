@@ -46,20 +46,21 @@ You see your own day reflected back to you better than you could've phrased it y
    cd auto-stand
    ```
 
-2. **Set up API keys:**
+2. **Set up API keys (using environment variables):**
    
-   Option A: Environment file (recommended)
    ```bash
+   ./setup-env.sh
+   # Or manually:
    cp .env.example .env
-   # Edit .env and add your keys
    ```
    
-   Option B: Direct configuration
-   ```dart
-   // Edit lib/config/api_config.dart
-   static const String openAIApiKey = 'your-key-here';
-   static const String slackWebhookUrl = 'your-webhook-here';
+   Edit `.env` and add your keys:
+   ```env
+   OPENAI_API_KEY=your-openai-api-key-here
+   SLACK_WEBHOOK_URL=your-slack-webhook-url-here
    ```
+   
+   The app will automatically load these from the .env file.
 
 3. **Install dependencies:**
    ```bash

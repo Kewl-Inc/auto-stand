@@ -10,7 +10,13 @@ class AIService {
   
   static String get _apiKey {
     try {
-      return dotenv.env['OPENAI_API_KEY'] ?? ApiConfig.openAIApiKey;
+      // First try to get from environment variable
+      final envKey = dotenv.env['OPENAI_API_KEY'];
+      if (envKey != null && envKey.isNotEmpty && envKey != 'your-openai-api-key-here') {
+        return envKey;
+      }
+      // Fall back to ApiConfig
+      return ApiConfig.openAIApiKey;
     } catch (e) {
       // Fallback for web or when dotenv is not initialized
       return ApiConfig.openAIApiKey;
@@ -59,7 +65,7 @@ class AIService {
     } catch (e, stackTrace) {
       debugPrint('Error generating standup update: $e');
       debugPrint('Stack trace: $stackTrace');
-      return null;
+      rethrow; // Re-throw to see the actual error
     }
   }
 
@@ -115,8 +121,10 @@ class AIService {
     required String rawContent,
     required List<TemplateSection> templateSections,
   }) async {
+    debugPrint('Generating sections with API key: ${_apiKey.substring(0, 10)}...');
+    
     if (_apiKey.isEmpty || _apiKey == 'your-openai-api-key-here') {
-      throw Exception('OpenAI API key not configured. Please add a valid API key.');
+      throw Exception('OpenAI API key not configured. Please add a valid API key in lib/config/api_config.dart');
     }
 
     try {
@@ -135,9 +143,11 @@ class AIService {
           'messages': [
             {
               'role': 'system',
-              'content': '''You are an AI assistant that helps create daily standup updates.
-              You should write in first person, be concise, and sound natural.
-              Extract relevant information for each section based on the provided content.'''
+              'content': '''You are an AI assistant that helps analyze work and projects.
+              For the Pros section: List positive aspects, each starting with a strong statement followed by a colon and explanation.
+              For the Cons section: List challenges or issues, each starting with a strong statement followed by a colon and explanation.
+              For the Where We Can Take It Further section: List actionable next steps, each starting with a strong verb followed by a colon and explanation.
+              Write concisely and focus on insights rather than just listing activities.'''
             },
             {
               'role': 'user',
@@ -394,16 +404,12 @@ Return ONLY the JSON object, no markdown formatting or code blocks.
 
   static String _getSectionTitle(SectionType type) {
     switch (type) {
-      case SectionType.whatIDid:
-        return 'What I did';
-      case SectionType.blockers:
-        return 'Blockers';
-      case SectionType.whatILearned:
-        return 'What I learned';
-      case SectionType.showAndTell:
-        return 'Show & Tell';
-      case SectionType.prototypeLinks:
-        return 'Prototype Links';
+      case SectionType.pros:
+        return 'Pros';
+      case SectionType.cons:
+        return 'Cons';
+      case SectionType.whatWeCanTakeFurther:
+        return 'Where We Can Take It Further';
       case SectionType.custom:
         return 'Updates';
     }

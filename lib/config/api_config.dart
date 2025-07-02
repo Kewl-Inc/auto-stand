@@ -1,8 +1,8 @@
 class ApiConfig {
   // For production, these should be loaded from environment variables
-  // or a secure configuration service
+  // These are fallback values if .env file is not found
   
-  // IMPORTANT: Add your OpenAI API key here or in .env file
+  // IMPORTANT: Add your OpenAI API key in .env file
   static const String openAIApiKey = 'your-openai-api-key-here';
   
   // Slack webhook URL for posting standup updates

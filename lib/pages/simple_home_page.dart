@@ -5,6 +5,7 @@ import 'package:auto_stand/models/models.dart';
 import 'package:auto_stand/services/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SimpleHomePage extends ConsumerStatefulWidget {
   const SimpleHomePage({super.key});
@@ -16,19 +17,43 @@ class SimpleHomePage extends ConsumerStatefulWidget {
 class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
   final _formKey = GlobalKey<FormState>();
   final _dataSourcesController = TextEditingController();
+  final _nameController = TextEditingController(text: 'Brina');
   
   bool _isGenerating = false;
   String? _generatedUpdate;
   List<TemplateSection> _enabledSections = TemplateSection.defaultSections;
 
   @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  @override
   void dispose() {
     _dataSourcesController.dispose();
+    _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedName = prefs.getString('userName');
+    if (savedName != null && savedName.isNotEmpty) {
+      _nameController.text = savedName;
+    }
+  }
+
+  Future<void> _saveUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', _nameController.text);
   }
 
   Future<void> _generateStandup() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Save the user's name
+    await _saveUserName();
 
     setState(() {
       _isGenerating = true;
@@ -75,7 +100,7 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
         debugPrint('Update was null - AI service returned no data');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to generate standup update - AI service error'),
+            content: const Text('Failed to generate analysis - AI service error'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -85,8 +110,8 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
       debugPrint('Stack trace: $stackTrace');
       
       String errorMessage = 'Error: ${e.toString()}';
-      if (e.toString().contains('API key')) {
-        errorMessage = 'OpenAI API key not configured';
+      if (e.toString().contains('API key') || e.toString().contains('your-openai-api-key-here')) {
+        errorMessage = 'OpenAI API key not configured. Please add your API key in lib/config/api_config.dart';
       } else if (e.toString().contains('401')) {
         errorMessage = 'Invalid OpenAI API key';
       } else if (e.toString().contains('429')) {
@@ -112,9 +137,6 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
   String _formatForSlack(StandupUpdate update) {
     final buffer = StringBuffer();
     
-    buffer.writeln('📅 *Daily Standup - ${_formatDate(DateTime.now())}*');
-    buffer.writeln();
-    
     for (final section in _enabledSections) {
       if (update.sections.containsKey(section.id)) {
         final content = update.sections[section.id]!;
@@ -122,20 +144,14 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
         // Section header with emoji
         String emoji = '';
         switch (section.type) {
-          case SectionType.whatIDid:
+          case SectionType.pros:
             emoji = '✅';
             break;
-          case SectionType.blockers:
-            emoji = '🚧';
+          case SectionType.cons:
+            emoji = '❌';
             break;
-          case SectionType.whatILearned:
-            emoji = '💡';
-            break;
-          case SectionType.showAndTell:
-            emoji = '🎨';
-            break;
-          case SectionType.prototypeLinks:
-            emoji = '🔗';
+          case SectionType.whatWeCanTakeFurther:
+            emoji = '🚀';
             break;
           default:
             emoji = '📌';
@@ -154,6 +170,10 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
         buffer.writeln();
       }
     }
+    
+    // Add sign-off
+    buffer.writeln();
+    buffer.writeln('— ${_nameController.text}');
     
     return buffer.toString();
   }
@@ -246,7 +266,7 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
                 ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.2),
                 const SizedBox(height: 8),
                 Text(
-                  'Generate your daily standup in seconds',
+                  'Analyze your work and generate insights',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
@@ -305,6 +325,48 @@ Reviewed 3 PRs''',
                         },
                       ),
                       
+                      const SizedBox(height: 24),
+                      
+                      // Name Input
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Your name',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _nameController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter your name',
+                                    filled: true,
+                                    fillColor: theme.colorScheme.surface,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: theme.colorScheme.outline,
+                                      ),
+                                    ),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Please enter your name';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      
                       const SizedBox(height: 32),
                       
                       // Generate Button
@@ -330,7 +392,7 @@ Reviewed 3 PRs''',
                                   ],
                                 )
                               : const Text(
-                                  'Generate Standup Update',
+                                  'Generate Analysis',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -361,7 +423,7 @@ Reviewed 3 PRs''',
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Your Standup Update',
+                              'Your Analysis',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),

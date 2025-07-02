@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Slack webhook URL - you can also put this in .env file
-const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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';
+const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || 'your-slack-webhook-url-here';
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -27,6 +27,9 @@ app.post('/api/slack/send', async (req, res) => {
       return res.status(400).json({ error: 'Message text is required' });
     }
 
+    console.log('Slack webhook URL:', SLACK_WEBHOOK_URL);
+    console.log('Sending message to Slack...');
+
     // Send to Slack
     const response = await axios.post(SLACK_WEBHOOK_URL, {
       text: text
@@ -35,6 +38,10 @@ app.post('/api/slack/send', async (req, res) => {
     res.json({ success: true, message: 'Message sent to Slack' });
   } catch (error) {
     console.error('Error sending to Slack:', error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     res.status(500).json({ 
       success: false, 
       error: 'Failed to send message to Slack',

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
 enum SectionType {
-  whatIDid,
-  blockers,
-  whatILearned,
-  showAndTell,
-  prototypeLinks,
+  pros,
+  cons,
+  whatWeCanTakeFurther,
   custom
 }
 
@@ -87,16 +85,12 @@ class TemplateSection {
     );
     
     switch (type) {
-      case SectionType.whatIDid:
-        return Icons.check_circle_outline;
-      case SectionType.blockers:
-        return Icons.block;
-      case SectionType.whatILearned:
-        return Icons.lightbulb_outline;
-      case SectionType.showAndTell:
-        return Icons.image_outlined;
-      case SectionType.prototypeLinks:
-        return Icons.link;
+      case SectionType.pros:
+        return Icons.thumb_up_outlined;
+      case SectionType.cons:
+        return Icons.thumb_down_outlined;
+      case SectionType.whatWeCanTakeFurther:
+        return Icons.rocket_launch_outlined;
       case SectionType.custom:
         return Icons.add_circle_outline;
     }
@@ -105,49 +99,31 @@ class TemplateSection {
   // Default template sections
   static List<TemplateSection> get defaultSections => [
     const TemplateSection(
-      id: 'what-i-did',
-      title: 'What I did',
-      description: 'Summary of completed work and progress',
-      type: SectionType.whatIDid,
-      icon: Icons.check_circle_outline,
+      id: 'pros',
+      title: 'Pros',
+      description: 'Positive aspects, strengths, and what\'s working well',
+      type: SectionType.pros,
+      icon: Icons.thumb_up_outlined,
       order: 0,
-      customPrompt: 'Summarize work completed, commits made, documents written, meetings attended',
+      customPrompt: 'Identify positive aspects, strengths, successful outcomes, what\'s working well, achievements, and wins. Each point should be concise and start with a strong statement followed by a colon and explanation.',
     ),
     const TemplateSection(
-      id: 'blockers',
-      title: 'What I\'m blocked by',
-      description: 'Current blockers and dependencies',
-      type: SectionType.blockers,
-      icon: Icons.block,
+      id: 'cons',
+      title: 'Cons',
+      description: 'Challenges, issues, and areas needing improvement',
+      type: SectionType.cons,
+      icon: Icons.thumb_down_outlined,
       order: 1,
-      customPrompt: 'Identify blockers, dependencies, questions asked, help needed',
+      customPrompt: 'Identify challenges, issues, blockers, problems, risks, and what\'s not working. Each point should be concise and start with a strong statement followed by a colon and explanation.',
     ),
     const TemplateSection(
-      id: 'what-i-learned',
-      title: 'What I learned',
-      description: 'New insights and learnings',
-      type: SectionType.whatILearned,
-      icon: Icons.lightbulb_outline,
+      id: 'what-we-can-take-further',
+      title: 'Where We Can Take It Further',
+      description: 'Opportunities, next steps, and potential improvements',
+      type: SectionType.whatWeCanTakeFurther,
+      icon: Icons.rocket_launch_outlined,
       order: 2,
-      customPrompt: 'Extract learnings, insights, discoveries, aha moments',
-    ),
-    const TemplateSection(
-      id: 'show-and-tell',
-      title: 'Show & Tell',
-      description: 'Screenshots, designs, and visual updates',
-      type: SectionType.showAndTell,
-      icon: Icons.image_outlined,
-      order: 3,
-      customPrompt: 'Collect screenshots, Figma links, Loom videos, visual artifacts',
-    ),
-    const TemplateSection(
-      id: 'prototype-links',
-      title: 'Prototype links',
-      description: 'Links to working prototypes and demos',
-      type: SectionType.prototypeLinks,
-      icon: Icons.link,
-      order: 4,
-      customPrompt: 'Find deployed apps, staging links, PR previews, demo videos',
+      customPrompt: 'Suggest opportunities for improvement, next steps, potential solutions, ideas to explore, and how to build on the work. Each point should be actionable and start with a strong verb followed by a colon and explanation.',
     ),
   ];
 }
