@@ -141,6 +141,11 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
       if (update.sections.containsKey(section.id)) {
         final content = update.sections[section.id]!;
         
+        // Skip empty sections
+        if (content.content.trim().isEmpty && content.bullets.isEmpty) {
+          continue;
+        }
+        
         // Section header with emoji
         String emoji = '';
         switch (section.type) {
@@ -163,7 +168,7 @@ class _SimpleHomePageState extends ConsumerState<SimpleHomePage> {
           for (final bullet in content.bullets) {
             buffer.writeln('  • $bullet');
           }
-        } else {
+        } else if (content.content.trim().isNotEmpty) {
           buffer.writeln(content.content);
         }
         

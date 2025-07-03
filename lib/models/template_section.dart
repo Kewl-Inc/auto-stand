@@ -105,7 +105,7 @@ class TemplateSection {
       type: SectionType.pros,
       icon: Icons.thumb_up_outlined,
       order: 0,
-      customPrompt: 'Identify positive aspects, strengths, successful outcomes, what\'s working well, achievements, and wins. Each point should be concise and start with a strong statement followed by a colon and explanation.',
+      customPrompt: 'What went well or is working? Only mention if truly noteworthy.',
     ),
     const TemplateSection(
       id: 'cons',
@@ -114,7 +114,7 @@ class TemplateSection {
       type: SectionType.cons,
       icon: Icons.thumb_down_outlined,
       order: 1,
-      customPrompt: 'Identify challenges, issues, blockers, problems, risks, and what\'s not working. Each point should be concise and start with a strong statement followed by a colon and explanation.',
+      customPrompt: 'Real blockers or issues? Skip if everything is fine.',
     ),
     const TemplateSection(
       id: 'what-we-can-take-further',
@@ -123,7 +123,7 @@ class TemplateSection {
       type: SectionType.whatWeCanTakeFurther,
       icon: Icons.rocket_launch_outlined,
       order: 2,
-      customPrompt: 'Suggest opportunities for improvement, next steps, potential solutions, ideas to explore, and how to build on the work. Each point should be actionable and start with a strong verb followed by a colon and explanation.',
+      customPrompt: 'Concrete next steps or opportunities. Be specific and actionable.',
     ),
   ];
 }

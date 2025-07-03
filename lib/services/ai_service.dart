@@ -143,11 +143,14 @@ class AIService {
           'messages': [
             {
               'role': 'system',
-              'content': '''You are an AI assistant that helps analyze work and projects.
-              For the Pros section: List positive aspects, each starting with a strong statement followed by a colon and explanation.
-              For the Cons section: List challenges or issues, each starting with a strong statement followed by a colon and explanation.
-              For the Where We Can Take It Further section: List actionable next steps, each starting with a strong verb followed by a colon and explanation.
-              Write concisely and focus on insights rather than just listing activities.'''
+              'content': '''Be ruthlessly concise. Only output sections with real signal.
+
+              Rules:
+              • If a section has nothing meaningful, omit it entirely (no empty string — exclude the key)
+              • Max 2-3 bullets per section
+              • Bullet format: "Key point: short explanation" (max 10 words)
+              • No filler, no fluff, no restating input
+              • Focus only on what matters for a standup'''
             },
             {
               'role': 'user',
@@ -175,25 +178,18 @@ class AIService {
 
   /// Build prompt for AI
   static String _buildPrompt(String rawContent, List<TemplateSection> sections) {
-    final sectionsMap = sections.map((section) => '''
-"${section.id}": "${section.title} - ${section.customPrompt ?? section.description}"''').join(',\n');
-
     return '''
-Based on the following activity data, create a daily standup update.
+You're given raw activity data. Generate a JSON standup update using only these possible keys:
+• "pros": What went well? Only include real wins.
+• "cons": What's blocking or broken? Skip if all clear.
+• "what-we-can-take-further": Next steps or opportunities. Be specific.
 
-Here's the activity data:
+Activity data:
 $rawContent
 
-Generate a JSON response with these exact keys:
-{
-$sectionsMap
-}
+Each section should be in first-person, using "•" or "-" bullets. Keep it natural, useful, and tight — like something you'd say out loud in 30 seconds.
 
-For each section, provide concise, natural-sounding content in first person.
-Use bullet points where appropriate (start lines with • or -).
-Focus on being helpful and informative for a daily standup meeting.
-
-Return ONLY the JSON object, no markdown formatting or code blocks.
+Return only the JSON object — no markdown, no extra text, no empty keys.
 ''';
   }
 
@@ -217,11 +213,22 @@ Return ONLY the JSON object, no markdown formatting or code blocks.
       
       for (final section in templateSections) {
         if (json.containsKey(section.id)) {
-          sections[section.id] = UpdateSection(
-            content: json[section.id] ?? '',
-            type: section.type,
-            bullets: _extractBullets(json[section.id] ?? ''),
-          );
+          final sectionData = json[section.id];
+          
+          // Handle both string and array responses
+          if (sectionData is List) {
+            sections[section.id] = UpdateSection(
+              content: '',
+              type: section.type,
+              bullets: sectionData.map((item) => item.toString()).toList(),
+            );
+          } else if (sectionData is String) {
+            sections[section.id] = UpdateSection(
+              content: sectionData,
+              type: section.type,
+              bullets: _extractBullets(sectionData),
+            );
+          }
         }
       }
       
